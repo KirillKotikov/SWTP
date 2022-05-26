@@ -1,9 +1,20 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Solution {
 
-    public static byte getResult(String fieldCells, String race) {
+    public static void main(String[] args) {
+        System.out.println(getResult("STWSWTPPTPTTPWPP", "Human", "info.json"));
+    }
+
+    public static byte getResult(String fieldCells, String inputRace, String fileName) {
         Map<Character, Byte> movingCost = null;
         char[][] field = {
                 {fieldCells.charAt(0), fieldCells.charAt(1), fieldCells.charAt(2), fieldCells.charAt(3)},
@@ -16,7 +27,34 @@ public class Solution {
         byte x;
         byte y;
 
-        switch (race) {
+        Object obj = null;
+        try {
+            obj = new JSONParser().parse(new FileReader(fileName));
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+        JSONObject jsonObject = (JSONObject) obj;
+        if (jsonObject != null) {
+            JSONArray races = (JSONArray) jsonObject.get("races");
+            for (Object raceObject : races) {
+                JSONObject race = (JSONObject) raceObject;
+                String raceName = String.valueOf(race.get("name"));
+                if (raceName.equals(inputRace)) {
+                    movingCost = new HashMap<>();
+                    JSONArray obstacles = (JSONArray) race.get("obstacles");
+                    for (Object obstacleObject : obstacles) {
+                        JSONObject obstacle = (JSONObject) obstacleObject;
+                        movingCost.put((String.valueOf(obstacle.get("name")).charAt(0)),
+                                Byte.valueOf(String.valueOf(obstacle.get("cost"))));
+                    }
+                }
+            }
+        } else {
+            System.out.println("В файле некорректная информация для расчетов");
+            System.exit(0);
+        }
+        // Перебираем ходы в цикле для вывода на экран
+        switch (inputRace) {
             case "Human" -> {
                 movingCost = new HashMap<>();
                 movingCost.put('S', (byte) 5);
@@ -39,7 +77,7 @@ public class Solution {
                 movingCost.put('P', (byte) 2);
             }
             default -> {
-                System.out.println("Указана неверная раса существа - " + race + ". Возможные варианты: Human, Swamper, Woodman.");
+                System.out.println("Указана неверная раса существа - " + inputRace + ". Возможные варианты: Human, Swamper, Woodman.");
                 System.exit(0);
             }
         }
